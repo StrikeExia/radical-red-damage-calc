@@ -5067,6 +5067,11 @@ const RR_PATCH: {[name: string]: DeepPartial<MoveData>} = {
     zp: 180,
     maxPower: 130,
   },
+  'Forbidden Spell': {
+    bp: 0,
+    type: 'Psychic',
+    category: 'Status',
+  },
   'Draco Barrage': {
     bp: 100,
     type: 'Dragon',

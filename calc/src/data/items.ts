@@ -514,7 +514,7 @@ const SV = SS.concat([
 ]);
 
 // RR
-SV.push('Burnt Seed');
+SV.push('Burnt Seed', 'Eternamax Orb');
 
 const BERRIES: {[berry: string]: {t: I.TypeName; p: number}} = {
   'Aguav Berry': {t: 'Dragon', p: 80},
