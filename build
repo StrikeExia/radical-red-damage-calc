@@ -28,6 +28,21 @@ function makeCachebuster(template, output) {
 	console.log("DONE");
 }
 
+function makeRRVersionPage(versionId, label, gen) {
+	const template = 'dist/index.template.html';
+	const outputTemplate = `dist/${versionId}.template.html`;
+	let contents = fs.readFileSync(path.resolve(rootDir, template), {encoding: 'utf8'});
+	contents = contents
+		.replace(
+			/Pok&eacute;mon Radical Red Damage Calculator/g,
+			`Pok&eacute;mon Radical Red ${label} Damage Calculator`
+		)
+		.replace(/rrcalc\/current-/g, `rrcalc/${versionId}-`)
+		.replace(/value="9" id="gen9" checked="checked"/g, `value="${gen}" id="gen${gen}" checked="checked"`);
+	fs.writeFileSync(path.resolve(rootDir, outputTemplate), contents);
+	makeCachebuster(outputTemplate, `dist/${versionId}.html`);
+}
+
 function cpdir(src, dest) {
 	console.log("Copying `" + src + "` to `" + dest + "`");
 	try {
@@ -51,7 +66,17 @@ function cpdir(src, dest) {
 			}
 			fs.writeFileSync(path.join(dest, file), contents);
 		} else {
-			fs.copyFileSync(path.join(src, file),path.join(dest, file));
+			const srcFile = path.join(src, file);
+			const destFile = path.join(dest, file);
+			try {
+				fs.copyFileSync(srcFile, destFile);
+			} catch (e) {
+				if (!['EACCES', 'EPERM'].includes(e.code) || !fs.existsSync(destFile)) throw e;
+				const srcStat = fs.statSync(srcFile);
+				const destStat = fs.statSync(destFile);
+				if (srcStat.size !== destStat.size) throw e;
+				console.warn("Skipping locked unchanged file `" + destFile + "`");
+			}
 		}
 	}
 }
@@ -67,3 +92,6 @@ makeCachebuster('dist/index.template.html', 'dist/index.html');
 makeCachebuster('dist/randoms.template.html', 'dist/randoms.html');
 makeCachebuster('dist/normal.template.html', 'dist/normal.html');
 makeCachebuster('dist/hardcore.template.html', 'dist/hardcore.html');
+makeRRVersionPage('rr40', '4.0', 9);
+makeRRVersionPage('rr31', '3.1', 8);
+makeRRVersionPage('rr23', '2.3', 8);
