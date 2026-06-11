@@ -59,7 +59,7 @@ function ExportPokemon(pokeInfo) {
 			finalText += "- " + moveName + "\n";
 		}
 	}
-	finalText = finalText.trim();
+	finalText = normalizeExportText(finalText.trim());
 	$("textarea.import-team-text").val(finalText);
 }
 
@@ -81,6 +81,27 @@ function serialize(array, separator) {
 		}
 	}
 	return text;
+}
+
+function normalizeUnicodeText(text, form) {
+	if (text === undefined || text === null) return '';
+	text = '' + text;
+	return typeof text.normalize === 'function' ? text.normalize(form) : text;
+}
+
+function normalizeCalcText(text) {
+	return normalizeUnicodeText(text, 'NFD');
+}
+
+function normalizeExportText(text) {
+	return normalizeUnicodeText(text, 'NFC');
+}
+
+function getSpeciesKey(speciesName) {
+	var normalizedName = normalizeCalcText(speciesName.trim());
+	if (calc.SPECIES[9][normalizedName] !== undefined) return normalizedName;
+	if (calc.SPECIES[9][speciesName.trim()] !== undefined) return speciesName.trim();
+	return normalizedName;
 }
 
 function getAbility(row) {
@@ -196,6 +217,8 @@ function getMoves(currentPoke, rows, offset) {
 
 function addToDex(poke) {
 	var dexObject = {};
+	poke.name = getSpeciesKey(poke.name);
+	poke.nameProp = normalizeCalcText(poke.nameProp);
 	if ($("#randoms").prop("checked")) {
 		if (GEN9RANDOMBATTLE[poke.name] == undefined) GEN9RANDOMBATTLE[poke.name] = {};
 		if (GEN8RANDOMBATTLE[poke.name] == undefined) GEN8RANDOMBATTLE[poke.name] = {};
@@ -250,46 +273,52 @@ function addToDex(poke) {
 }
 
 function updateDex(customsets) {
+	var normalizedCustomsets = {};
 	for (var pokemon in customsets) {
+		var pokemonName = getSpeciesKey(pokemon);
+		if (!normalizedCustomsets[pokemonName]) normalizedCustomsets[pokemonName] = {};
 		for (var moveset in customsets[pokemon]) {
-			if (!SETDEX_SV[pokemon]) SETDEX_SV[pokemon] = {};
-			SETDEX_SV[pokemon][moveset] = customsets[pokemon][moveset];
-			if (!SETDEX_SS[pokemon]) SETDEX_SS[pokemon] = {};
-			SETDEX_SS[pokemon][moveset] = customsets[pokemon][moveset];
-			if (!SETDEX_SM[pokemon]) SETDEX_SM[pokemon] = {};
-			SETDEX_SM[pokemon][moveset] = customsets[pokemon][moveset];
-			if (!SETDEX_XY[pokemon]) SETDEX_XY[pokemon] = {};
-			SETDEX_XY[pokemon][moveset] = customsets[pokemon][moveset];
-			if (!SETDEX_BW[pokemon]) SETDEX_BW[pokemon] = {};
-			SETDEX_BW[pokemon][moveset] = customsets[pokemon][moveset];
-			if (!SETDEX_DPP[pokemon]) SETDEX_DPP[pokemon] = {};
-			SETDEX_DPP[pokemon][moveset] = customsets[pokemon][moveset];
-			if (!SETDEX_ADV[pokemon]) SETDEX_ADV[pokemon] = {};
-			SETDEX_ADV[pokemon][moveset] = customsets[pokemon][moveset];
-			if (!SETDEX_GSC[pokemon]) SETDEX_GSC[pokemon] = {};
-			SETDEX_GSC[pokemon][moveset] = customsets[pokemon][moveset];
-			if (!SETDEX_RBY[pokemon]) SETDEX_RBY[pokemon] = {};
-			SETDEX_RBY[pokemon][moveset] = customsets[pokemon][moveset];
+			var setName = normalizeCalcText(moveset);
+			normalizedCustomsets[pokemonName][setName] = customsets[pokemon][moveset];
+			if (!SETDEX_SV[pokemonName]) SETDEX_SV[pokemonName] = {};
+			SETDEX_SV[pokemonName][setName] = customsets[pokemon][moveset];
+			if (!SETDEX_SS[pokemonName]) SETDEX_SS[pokemonName] = {};
+			SETDEX_SS[pokemonName][setName] = customsets[pokemon][moveset];
+			if (!SETDEX_SM[pokemonName]) SETDEX_SM[pokemonName] = {};
+			SETDEX_SM[pokemonName][setName] = customsets[pokemon][moveset];
+			if (!SETDEX_XY[pokemonName]) SETDEX_XY[pokemonName] = {};
+			SETDEX_XY[pokemonName][setName] = customsets[pokemon][moveset];
+			if (!SETDEX_BW[pokemonName]) SETDEX_BW[pokemonName] = {};
+			SETDEX_BW[pokemonName][setName] = customsets[pokemon][moveset];
+			if (!SETDEX_DPP[pokemonName]) SETDEX_DPP[pokemonName] = {};
+			SETDEX_DPP[pokemonName][setName] = customsets[pokemon][moveset];
+			if (!SETDEX_ADV[pokemonName]) SETDEX_ADV[pokemonName] = {};
+			SETDEX_ADV[pokemonName][setName] = customsets[pokemon][moveset];
+			if (!SETDEX_GSC[pokemonName]) SETDEX_GSC[pokemonName] = {};
+			SETDEX_GSC[pokemonName][setName] = customsets[pokemon][moveset];
+			if (!SETDEX_RBY[pokemonName]) SETDEX_RBY[pokemonName] = {};
+			SETDEX_RBY[pokemonName][setName] = customsets[pokemon][moveset];
 		}
 	}
-	localStorage.customsets = JSON.stringify(customsets);
+	localStorage.customsets = JSON.stringify(normalizedCustomsets);
 }
 
 function addSets(pokes, name) {
 	var rows = pokes.split("\n");
+	name = normalizeCalcText(name);
 	var currentRow;
 	var currentPoke;
 	var addedpokes = 0;
 	for (var i = 0; i < rows.length; i++) {
 		currentRow = rows[i].split(/[()@]/);
 		for (var j = 0; j < currentRow.length; j++) {
-			currentRow[j] = checkExeptions(currentRow[j].trim());
-			if (calc.SPECIES[9][currentRow[j].trim()] !== undefined) {
-				currentPoke = calc.SPECIES[9][currentRow[j].trim()];
-				currentPoke.name = currentRow[j].trim();
+			currentRow[j] = getSpeciesKey(checkExeptions(currentRow[j].trim()));
+			if (calc.SPECIES[9][currentRow[j]] !== undefined) {
+				currentPoke = calc.SPECIES[9][currentRow[j]];
+				currentPoke.name = currentRow[j];
 				currentPoke.item = getItem(currentRow, j + 1);
 				if (j === 1 && currentRow[0].trim()) {
-					currentPoke.nameProp = currentRow[0].trim();
+					currentPoke.nameProp = normalizeCalcText(currentRow[0].trim());
 				} else {
 					currentPoke.nameProp = name;
 				}
