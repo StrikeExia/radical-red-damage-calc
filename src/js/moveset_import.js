@@ -140,6 +140,7 @@ function getStats(currentPoke, rows, offset) {
 	var currentNature;
 	currentPoke.level = 100;
 	for (var x = offset; x < offset + 9; x++) {
+		if (!rows[x] || !rows[x].trim()) break;
 		var currentRow = rows[x] ? rows[x].split(/[/:]/) : '';
 		var evs = {};
 		var ivs = {};
@@ -252,6 +253,9 @@ function addToDex(poke) {
 	dexObject.moves = poke.moves;
 	dexObject.nature = poke.nature;
 	dexObject.item = poke.item;
+	if (poke.importedGender) {
+		dexObject.gender = poke.importedGender;
+	}
 	dexObject.isCustomSet = poke.isCustomSet;
 	var customsets;
 	if (localStorage.customsets) {
@@ -311,6 +315,7 @@ function addSets(pokes, name, options) {
 	var currentPoke;
 	var addedpokes = 0;
 	for (var i = 0; i < rows.length; i++) {
+		var importedGender = rows[i].match(/\(([MF])\)(?=\s*(?:@|$))/);
 		currentRow = rows[i].split(/[()@]/);
 		for (var j = 0; j < currentRow.length; j++) {
 			currentRow[j] = getSpeciesKey(checkExeptions(currentRow[j].trim()));
@@ -318,6 +323,7 @@ function addSets(pokes, name, options) {
 				currentPoke = calc.SPECIES[9][currentRow[j]];
 				currentPoke.name = currentRow[j];
 				currentPoke.item = getItem(currentRow, j + 1);
+				currentPoke.importedGender = importedGender ? importedGender[1] : undefined;
 				if (j === 1 && currentRow[0].trim()) {
 					currentPoke.nameProp = normalizeCalcText(currentRow[0].trim());
 				} else {

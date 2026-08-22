@@ -76,6 +76,96 @@
   var rrAbilityIdsBySpeciesId = dexAbilityConstants.abilityIdsBySpeciesId || [];
   var rrItems = itemConstants.items || [];
   var rrGrowthRatesBySpeciesId = growthRateConstants.growthRatesBySpeciesId || [];
+  // Radical Red 4.1 changes several experience curves from their canonical
+  // values. These overrides were verified against the patched ROM's species
+  // table; without them, valid boxed Pokémon can resolve to the wrong level.
+  var RR_41_GROWTH_RATE_OVERRIDES = {
+    482: 4, // Mismagius
+    494: 0, // Chatot
+    776: 3, // Pyroar
+    831: 3, // Pyroar
+    835: 4, // Varoom
+    836: 4, // Revavroom
+    840: 0, // Tinkatink
+    841: 0, // Tinkatuff
+    842: 0, // Tinkaton
+    843: 5, // Pawmi
+    844: 5, // Pawmo
+    845: 5, // Pawmot
+    850: 0, // Gimmighoul
+    851: 0, // Gimmighoul-Roaming
+    852: 0, // Gholdengo
+    859: 5, // Greavard
+    860: 5, // Houndstone
+    861: 5, // Tadbulb
+    862: 5, // Bellibolt
+    863: 4, // Finizen
+    864: 4, // Palafin
+    865: 4, // Palafin-Hero
+    934: 0, // Ceruledge
+    935: 0, // Armarouge
+    938: 0, // Charcadet
+    990: 5, // Silvally
+    994: 4, // Togedemaru
+    996: 3, // Bruxish
+    1101: 0, // Cyclizar
+    1186: 4, // Lokix-Sevii
+    1198: 5, // Toedscool
+    1199: 5, // Toedscruel
+    1200: 4, // Nymble-Sevii
+    1230: 0, // Iron Thorns
+    1231: 0, // Iron Bundle
+    1232: 0, // Iron Valiant
+    1237: 0, // Great Tusk
+    1243: 0, // Brute Bonnet
+    1244: 0, // Sandy Shocks
+    1245: 0, // Scream Tail
+    1246: 0, // Flutter Mane
+    1247: 0, // Iron Moth
+    1255: 0, // Slither Wing
+    1257: 0, // Roaring Moon
+    1258: 0, // Iron Treads
+    1262: 0, // Iron Hands
+    1263: 0, // Iron Jugulis
+    1314: 4, // Tarountula
+    1315: 4, // Spidops
+    1316: 4, // Nymble
+    1317: 4, // Lokix
+    1318: 0, // Rellor
+    1319: 0, // Rabsca
+    1320: 0, // Flittle
+    1321: 0, // Espathra
+    1322: 2, // Dondozo
+    1323: 2, // Veluza
+    1327: 3, // Capsakid
+    1328: 3, // Scovillain
+    1332: 0, // Cetoddle
+    1333: 0, // Cetitan
+    1334: 0, // Tatsugiri
+    1335: 5, // Wattrel
+    1336: 5, // Kilowattrel
+    1338: 5, // Squawkabilly
+    1339: 5, // Flamigo
+    1343: 0, // Glimmet
+    1344: 0, // Glimmora
+    1345: 0, // Shroodle
+    1346: 0, // Grafaiai
+    1347: 4, // Fidough
+    1348: 4, // Dachsbun
+    1349: 4, // Maschiff
+    1350: 4, // Mabosstiff
+    1355: 5, // Squawkabilly-White
+    1357: 0, // Ogerpon
+    1358: 0, // Ogerpon-Wellspring
+    1359: 0, // Ogerpon-Hearthflame
+    1360: 0, // Ogerpon-Cornerstone
+    1364: 0, // Fezandipiti
+    1365: 0, // Munkidori
+    1366: 0, // Okidogi
+  };
+  Object.keys(RR_41_GROWTH_RATE_OVERRIDES).forEach(function (speciesId) {
+    rrGrowthRatesBySpeciesId[speciesId] = RR_41_GROWTH_RATE_OVERRIDES[speciesId];
+  });
   var rrAbilityIdNameMapCache = null;
   var rrAbilityNameIdMapCache = null;
   var rrWatchTimer = null;
@@ -694,6 +784,20 @@
     return speciesName;
   }
 
+  function rrResolveGender(speciesName, pid) {
+    if (/-F$/.test(speciesName) || speciesName === "Nidoran-F") {
+      return "F";
+    }
+    if (/-M$/.test(speciesName) || speciesName === "Nidoran-M") {
+      return "M";
+    }
+
+    // Gen III stores gender in the personality value rather than a separate
+    // field. These ordinary gendered species use the standard 50/50 threshold.
+    // The calculator's species metadata continues to hide genderless species.
+    return ((pid >>> 0) & 0xFF) < 127 ? "F" : "M";
+  }
+
   function rrWrappedSlice(bytes, start, length) {
     var out = new Uint8Array(length);
     for (var i = 0; i < length; i++) {
@@ -846,7 +950,7 @@
       pid: pid >>> 0,
       speciesId: speciesId >>> 0,
       speciesName: speciesName,
-      gender: speciesName === "Jellicent-F" ? "F" : undefined,
+      gender: rrResolveGender(speciesName, pid),
       exp: rrReadU32LE(monStruct, 36) >>> 0,
       level: rrResolveLevel(speciesId, rrReadU32LE(monStruct, 36) >>> 0, rrReadU8(monStruct, 84)),
       natureName: rrNatures[pid % 25] || "Hardy",
@@ -886,7 +990,7 @@
       pid: pid >>> 0,
       speciesId: speciesId >>> 0,
       speciesName: speciesName,
-      gender: speciesName === "Jellicent-F" ? "F" : undefined,
+      gender: rrResolveGender(speciesName, pid),
       exp: rrReadU32LE(monStruct, 32) >>> 0,
       level: rrResolveLevel(speciesId, rrReadU32LE(monStruct, 32) >>> 0, null),
       natureName: rrNatures[pid % 25] || "Hardy",
@@ -917,7 +1021,9 @@
       output.push("- " + moveName);
     });
     output.push("");
-    return output.join("\n");
+    // addSets() scans several rows ahead for each set. Keep a truly blank row
+    // between records so the following Level line cannot overwrite this one.
+    return output.join("\n") + "\n";
   }
 
   function rrScanPcData(pcData, saveInfo, options) {
@@ -1215,6 +1321,7 @@
       resolveAbilityNameById: rrResolveAbilityNameById,
       resolveBaseAbilityId: rrResolveBaseAbilityId,
       resolveGenderedSpeciesName: rrResolveGenderedSpeciesName,
+      resolveGender: rrResolveGender,
       resolveItemName: rrResolveItemName,
       randomizedAbilitiesEnabled: rrRandomizedAbilitiesEnabled,
       resolvePartyAbilitySlot: rrResolvePartyAbilitySlot,
