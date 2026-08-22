@@ -23,6 +23,16 @@ html, body {
     color: var(--text);
 }
 
+.theme-toggle {
+    color: var(--text);
+    background: var(--background);
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+    background: var(--button-hover);
+}
+
 .btn:hover {
     z-index: 10;
     background: var(--button-hover);

@@ -8,20 +8,6 @@
     <link type="text/css" rel="stylesheet" href="./css/main.css?" />
     <link type="text/css" rel="stylesheet" href="./css/vendor/bootstrap.css" />
     <link type="text/css" rel="stylesheet" href="./css/dark-theme.css" id="dark-theme-styles">
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-26211653-3"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'UA-26211653-3');
-
-        window.onerror = function(err, uri, line) {
-            gtag('event', 'exception', {'description': uri + ':' + line + ': ' + err});
-            return false;
-        };
-    </script>
     <!-- Immediately loads the dark theme in order to reduce FOIT -->
     <script>
         /*
@@ -59,18 +45,13 @@
             <span class="visually-hidden" id="selectGenInstruction">Select the generation.</span>
             <input class="gen visually-hidden" type="radio" name="gen" value="9" id="gen9" checked="checked" />
         </span>
-        <span class="notationSelection" aria-labelledby="selectNotationInstruction" role="radiogroup" title="Select the output notation.">
-            <span class="visually-hidden" id="selectNotationInstruction">Select the output notation.</span>
-            <input class="notation visually-hidden" type="radio" name="notation" id="pixels" value="px" /><label class="btn btn-small btn-left" for="pixels">48th</label>
-            <input class="notation visually-hidden" type="radio" name="notation" id="percentage" value="%" /><label class="btn btn-small btn-right" for="percentage">100%</label>
-        </span>
+        <input class="notation visually-hidden" type="radio" name="notation" id="percentage" value="%" checked="checked" />
         <span class="modeSelection" aria-labelledby="selectModeInstruction" role="radiogroup" title="Select the calculator's mode of function.">
             <span class="visually-hidden" id="selectModeInstruction">Select the calculator's mode of function.</span>
-            <input class="mode visually-hidden" type="radio" name="mode" id="one-vs-one" /><label class="btn btn-left" for="one-vs-one">One vs One</label>
-            <input class="mode visually-hidden" type="radio" name="mode" id="normal" checked="checked" /><label class="btn btn-mid" for="normal">Normal Mode</label>
-            <input class="mode visually-hidden" type="radio" name="mode" id="hardcore" /><label class="btn btn-mid" for="hardcore">Hardcore Mode</label>
-            <input class="mode visually-hidden" type="radio" name="mode" id="randoms" /><label class="btn btn-right" for="randoms">Random Battles</label>
+            <input class="mode visually-hidden" type="radio" name="mode" id="normal" checked="checked" /><label class="btn btn-left" for="normal">Normal Mode</label>
+            <input class="mode visually-hidden" type="radio" name="mode" id="hardcore" /><label class="btn btn-right" for="hardcore">Hardcore Mode</label>
         </span>
+        <button type="button" id="dark-theme-toggle" class="theme-toggle" aria-label="Switch to dark theme" title="Switch to dark theme"><span aria-hidden="true"><span class="theme-name">Light</span><br />Mode</span></button>
     </div>
     <hr />
     <div aria-label="Move selection" class="move-result-group" role="region" title="Select a move to show detailed results.">
@@ -967,6 +948,8 @@
                         <textarea class="import-team-text"></textarea>
                         <!--<button style='position:absolute' class='bs-btn bs-btn-default'>Import</button>-->
                     </form>
+                    <label for="save-upload" class="bs-btn bs-btn-default" id="read-save">Import Radical Red .sav</label>
+                    <input id="save-upload" type="file" accept=".sav,.srm" hidden />
                 </div>
             </fieldset>
         </div>
@@ -1512,6 +1495,7 @@
     <script type="text/javascript" src="./calc/stats.js?"></script>
     <script type="text/javascript" src="./calc/data/species.js?"></script>
     <script type="text/javascript" src="./js/data/sets/normal.js?"></script>
+    <script type="text/javascript" src="./js/data/sets/trainer-teams-normal.js?"></script>
     <script type="text/javascript" src="./js/data/sets/gen8.js?"></script>
     <script type="text/javascript" src="./js/data/sets/gen7.js?"></script>
     <script type="text/javascript" src="./js/data/sets/gen6.js?"></script>
@@ -1544,14 +1528,20 @@
     <script type="text/javascript" src="./js/shared_controls.js?"></script>
     <script type="text/javascript" src="./js/index_randoms_controls.js?"></script>
     <script type="text/javascript" src="./js/moveset_import.js?"></script>
+    <script type="text/javascript" src="./js/savereaders/save_constants/radical_red_constants.js?"></script>
+    <script type="text/javascript" src="./js/savereaders/save_constants/radical_red_dex_ability_constants.js?"></script>
+    <script type="text/javascript" src="./js/savereaders/save_constants/radical_red_item_constants.js?"></script>
+    <script type="text/javascript" src="./js/savereaders/save_constants/radical_red_randomizer_constants.js?"></script>
+    <script type="text/javascript" src="./js/savereaders/save_constants/radical_red_growth_rate_constants.js?"></script>
+    <script type="text/javascript" src="./js/savereaders/savereader_radicalred.js?"></script>
+    <script type="text/javascript" src="./js/radical_red_ui.js?"></script>
 </div>
 
-<div class="credits">Original is created by Honko and maintained by Austin and Kris. Edited by Karthik.
-    <ul><li><a href="https://github.com/RadicalRedShowdown/calc/contributors" class="links-lighten" target="_blank">Contributors</a></li>
-    <li><a href="https://github.com/RadicalRedShowdown/calc/issues" class="links-lighten" target="_blank">Bug Reports</a></li>
-    <li><a href="https://github.com/RadicalRedShowdown/calc" class="links-lighten" target="_blank">GitHub repository</a></li></ul>
+<div class="credits">Original is created by Honko and maintained by Austin and Kris. Edited by Karthik and further edited by <a href="https://github.com/StrikeExia" class="links-lighten" target="_blank" rel="noopener">StrikeExia</a>.
+    <ul><li><a href="https://github.com/RadicalRedShowdown/calc/contributors" class="links-lighten" target="_blank" rel="noopener">Contributors</a></li>
+    <li><a href="https://github.com/StrikeExia/radical-red-damage-calc/issues" class="links-lighten" target="_blank" rel="noopener">Bug Reports</a></li>
+    <li><a href="https://github.com/StrikeExia/radical-red-damage-calc" class="links-lighten" target="_blank" rel="noopener">GitHub repository</a></li></ul>
 
-    <button type="button" id="dark-theme-toggle"></button>
     <script type="text/javascript" src="./js/dark-theme-toggle.js?"></script>
 </div>
 

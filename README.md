@@ -184,6 +184,31 @@ This project was created by Honko and is primarily maintained by Austin.
 Many other contributors have added features or contributed bug fixes, please see the
 [full list of contributors](https://github.com/smogon/damage-calc/graphs/contributors).
 
+### About this Radical Red fork
+
+This version was further edited by [StrikeExia](https://github.com/StrikeExia). You can find it in
+the [StrikeExia/radical-red-damage-calc repository](https://github.com/StrikeExia/radical-red-damage-calc).
+
+Some helpful extras were added for Radical Red players:
+
+- Import your Radical Red 4.1 save to load your party and PC boxes.
+- Let the calculator watch your save file and refresh it automatically.
+- See your own Pokémon and the opposing trainer's full team with sprites.
+
+The save and team-box ideas were inspired by calculators for other Pokémon ROM hacks, especially
+the [Pokémon Run & Bun calculator](https://calc.runandbun.com/).
+
+Thanks to soupercell and the Radical Red team for the game and the official
+[Normal mode](https://docs.google.com/spreadsheets/d/1ES8L4OzeJ8rCuMWFNvrDaZKArqR7Vys2ytFxjx2pbwE/edit)
+and [Hardcore mode](https://docs.google.com/spreadsheets/d/1jDbKFA30xo8csPHZNLtsmqs781bW_Xb9mKoPYyE6KK8/edit)
+guides. The earlier [fan-made Normal guide](https://docs.google.com/spreadsheets/d/1cF_chvrddauL1KXVB0jGDxmW_w3Md7BZi6xrRHspYsY/edit)
+was made by LightGlory and Vrondius. Trainer information was also checked against dumps shared by
+[Rudo2204](https://gist.github.com/Rudo2204).
+
+The small Pokémon sprites come from [RR-Sprites](https://github.com/JonnyGoldApple/RR-Sprites),
+while the larger battle sprites come from the
+[Smogon / Pokémon Showdown sprite repository](https://github.com/smogon/sprites) and its artists.
+
 ## License
 
 This package is distributed under the terms of the [MIT License][3].

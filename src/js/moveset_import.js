@@ -303,7 +303,8 @@ function updateDex(customsets) {
 	localStorage.customsets = JSON.stringify(normalizedCustomsets);
 }
 
-function addSets(pokes, name) {
+function addSets(pokes, name, options) {
+	options = options || {};
 	var rows = pokes.split("\n");
 	name = normalizeCalcText(name);
 	var currentRow;
@@ -333,11 +334,12 @@ function addSets(pokes, name) {
 		}
 	}
 	if (addedpokes > 0) {
-		alert("Successfully imported " + addedpokes + " set(s)");
+		if (!options.silent) alert("Successfully imported " + addedpokes + " set(s)");
 		$(allPokemon("#importedSetsOptions")).css("display", "inline");
-	} else {
+	} else if (!options.silent) {
 		alert("No sets imported, please check your syntax and try again");
 	}
+	return addedpokes;
 }
 
 function checkExeptions(poke) {
@@ -393,6 +395,8 @@ function checkExeptions(poke) {
 $(allPokemon("#clearSets")).click(function () {
 	if (confirm("Are you sure you want to delete your custom sets? This action cannot be undone.")) {
 		localStorage.removeItem("customsets");
+		localStorage.removeItem("radicalRedSaveRoster");
+		$("#rr-save-roster").empty();
 		alert("Custom Sets successfully cleared. Please refresh the page.");
 		$(allPokemon("#importedSetsOptions")).hide();
 		loadDefaultLists();
