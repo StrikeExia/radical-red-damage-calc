@@ -52,9 +52,14 @@ function parseDump(text) {
 		var trainer = {id: header[2].toLowerCase(), name: header[1].trim(), pokemon: []};
 		var current = null;
 		lines.slice(1).forEach(function (line) {
-			var pokemon = line.match(/^(.+?)(?: \([^)]+\))? @ (.+)$/);
+			var pokemon = line.match(/^(.+?)(?: \(([^)]+)\))? @ (.+)$/);
 			if (pokemon) {
-				current = {speciesName: pokemon[1].trim(), item: pokemon[2].trim(), moves: []};
+				current = {
+					speciesName: pokemon[1].trim(),
+					gender: pokemon[2] === "M" || pokemon[2] === "F" ? pokemon[2] : "N",
+					item: pokemon[3].trim(),
+					moves: []
+				};
 				trainer.pokemon.push(current);
 				return;
 			}
@@ -153,12 +158,13 @@ function median(values) {
 	return sorted[Math.floor(sorted.length / 2)];
 }
 
-function asMember(match) {
+function asMember(match, gender) {
 	return {
 		selection: match.selection,
 		speciesName: match.speciesName,
 		setName: match.setName,
-		level: match.level
+		level: match.level,
+		gender: gender === "M" || gender === "F" || gender === "N" ? gender : undefined
 	};
 }
 
@@ -263,7 +269,7 @@ function generate(trainers, setdex) {
 		});
 
 		var members = slots.filter(function (slot) { return slot.match; }).map(function (slot) {
-			return asMember(slot.match);
+			return asMember(slot.match, slot.pokemon.gender);
 		});
 		var unmatched = slots.filter(function (slot) { return !slot.match; }).map(function (slot) {
 			return slot.pokemon.speciesName;

@@ -122,6 +122,13 @@
 		selector.select2("data", option, true);
 	}
 
+	function rrApplyRosterGender(side, gender) {
+		var genderControl = $(side + " .gender");
+		if (!genderControl.length || !genderControl.parent().is(":visible")) return;
+		var value = gender === "F" ? "Female" : gender === "M" ? "Male" : "";
+		genderControl.val(value).change();
+	}
+
 	function rrMakeRosterButton(mon, setName, targetSide) {
 		var button = document.createElement("button");
 		button.type = "button";
@@ -135,7 +142,9 @@
 		level.textContent = "Lv" + mon.level;
 		button.appendChild(level);
 		button.addEventListener("click", function (event) {
-			rrSelectSet(event.shiftKey ? "#p2" : targetSide, mon.speciesName, setName);
+			var selectedSide = event.shiftKey ? "#p2" : targetSide;
+			rrSelectSet(selectedSide, mon.speciesName, setName);
+			rrApplyRosterGender(selectedSide, mon.gender);
 		});
 		return button;
 	}
@@ -284,11 +293,18 @@
 			teamIndexes.forEach(function (teamIndex) { teams.push(RR_TRAINER_TEAMS[teamIndex]); });
 		}
 		if (teams.length) {
+			var selectedGenders = [];
 			teams.forEach(function (team, index) {
 				var title = "Opposing team · " + selection.setName;
 				if (teams.length > 1) title += " · Team " + (index + 1);
 				rrRenderOpponentTeamGroup(roster, title, team.members, selection.setName);
+				team.members.forEach(function (member) {
+					if (member.selection === selectionKey && selectedGenders.indexOf(member.gender) === -1) {
+						selectedGenders.push(member.gender);
+					}
+				});
 			});
+			if (selectedGenders.length === 1) rrApplyRosterGender("#p2", selectedGenders[0]);
 			return;
 		}
 
