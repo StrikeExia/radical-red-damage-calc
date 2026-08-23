@@ -508,23 +508,19 @@
     var slot = Number.isInteger(abilitySlot) ? abilitySlot : 0;
 
     if (abilityIds.length) {
-      var targetKey = rrNormalizeAbilityNameKey(baseAbilityName);
-      if (targetKey) {
-        for (var abilityIndex = 0; abilityIndex < abilityIds.length; abilityIndex++) {
-          var candidateAbilityId = abilityIds[abilityIndex] || 0;
-          if (!candidateAbilityId) {
-            continue;
-          }
-
-          if (rrNormalizeAbilityNameKey(rrResolveAbilityNameById(candidateAbilityId)) === targetKey) {
-            return candidateAbilityId;
-          }
-        }
-      }
-
-      var slotAbilityId = abilityIds[slot] || 0;
+      // The Radical Red dex table stores abilities as hidden, primary,
+      // secondary. The save's ability slot uses primary, secondary, hidden.
+      // Reading both arrays in the same order caused Ability Pill changes to
+      // keep resolving as the primary randomized ability.
+      var dexSlot = slot === 2 ? 0 : slot + 1;
+      var slotAbilityId = abilityIds[dexSlot] || 0;
       if (slotAbilityId) {
         return slotAbilityId;
+      }
+
+      // Missing secondary/hidden abilities fall back to the primary ability.
+      if (abilityIds[1]) {
+        return abilityIds[1];
       }
 
       for (var fallbackIndex = 0; fallbackIndex < abilityIds.length; fallbackIndex++) {
