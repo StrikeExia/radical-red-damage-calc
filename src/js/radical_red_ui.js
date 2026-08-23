@@ -1,4 +1,4 @@
-/* global getSetOptions, setdex, RR_TRAINER_TEAMS, RR_TRAINER_TEAM_INDEX */
+/* global getSetOptions, pokedex, setdex, RR_TRAINER_TEAMS, RR_TRAINER_TEAM_INDEX */
 
 (function () {
 	"use strict";
@@ -116,25 +116,29 @@
 
 		if (!option) return;
 
-		// Select2 3.x's initSelection always returns the calculator's first set.
-		// Supplying the complete option object keeps its display and hidden value
-		// in sync, then asks Select2 to emit the normal calculator change event.
+		// Give Select2 the whole option so the chosen Pokémon and set stay in sync.
 		selector.select2("data", option, true);
 	}
 
 	function rrApplyRosterGender(side, gender) {
 		var genderControl = $(side + " .gender");
-		if (!genderControl.length || !genderControl.parent().is(":visible")) return;
+		if (!genderControl.length) return;
 		var value = gender === "F" ? "Female" : gender === "M" ? "Male" : "";
 		genderControl.val(value).change();
 	}
 
 	function rrMakeRosterButton(mon, setName, targetSide) {
+		var importedSet = typeof setdex !== "undefined" && setdex[mon.speciesName] &&
+			setdex[mon.speciesName][setName];
+		var formeAbilities = mon.formeAbilities || null;
+		var gender = mon.gender || importedSet && importedSet.gender || "";
 		var button = document.createElement("button");
 		button.type = "button";
 		button.className = "rr-roster-mon";
 		button.title = mon.speciesName + " · Level " + mon.level + " · Click for Pokémon 1, Shift-click for Pokémon 2";
 		button.setAttribute("aria-label", button.title);
+		button.dataset.speciesName = mon.speciesName;
+		button.dataset.formeAbilities = JSON.stringify(formeAbilities || {});
 		button.appendChild(rrCreateSprite(mon.speciesName));
 
 		var level = document.createElement("span");
@@ -144,7 +148,9 @@
 		button.addEventListener("click", function (event) {
 			var selectedSide = event.shiftKey ? "#p2" : targetSide;
 			rrSelectSet(selectedSide, mon.speciesName, setName);
-			rrApplyRosterGender(selectedSide, mon.gender);
+			$(selectedSide).attr("data-forme-abilities", JSON.stringify(formeAbilities || {}));
+			rrApplyRosterGender(selectedSide, gender);
+			rrUpdateCardSprite(document.querySelector(selectedSide), mon.speciesName);
 		});
 		return button;
 	}
@@ -203,7 +209,12 @@
 
 	function rrSerializeMons(mons) {
 		return (mons || []).map(function (mon) {
-			return {speciesName: mon.speciesName, level: mon.level};
+			return {
+				speciesName: mon.speciesName,
+				level: mon.level,
+				gender: mon.gender,
+				formeAbilities: mon.formeAbilities
+			};
 		});
 	}
 
@@ -249,10 +260,19 @@
 		return sprite;
 	}
 
-	function rrUpdateCardSprite(pokeInfo) {
+	function rrUpdateCardSprite(pokeInfo, selectedSpeciesName) {
+		if (!pokeInfo) return;
 		var selection = rrParseSetSelection($(pokeInfo).find("input.set-selector").val());
+		var forme = $(pokeInfo).find("select.forme").val();
+		var spriteSpeciesName = selectedSpeciesName || selection.speciesName;
+		var selectedSpecies = typeof pokedex !== "undefined" && pokedex[selection.speciesName];
+		var formeSpecies = typeof pokedex !== "undefined" && pokedex[forme];
+		var selectedFamily = selectedSpecies && selectedSpecies.baseSpecies || selection.speciesName;
+		var formeFamily = formeSpecies && formeSpecies.baseSpecies || forme;
+		// Only use the Forme value when it belongs to the Pokémon we just selected.
+		if (!selectedSpeciesName && forme && selectedFamily === formeFamily) spriteSpeciesName = forme;
 		var sprite = rrEnsureCardSprite(pokeInfo);
-		if (sprite && selection.speciesName) rrSetBattleSprite(sprite, selection.speciesName);
+		if (sprite && spriteSpeciesName) rrSetBattleSprite(sprite, spriteSpeciesName);
 	}
 
 	function rrEnsureOpponentRoster() {
@@ -308,8 +328,7 @@
 			return;
 		}
 
-		// Older/non-normal data has no trainer-ID lookup. It is safe to retain the
-		// label grouping only when it could plausibly be one in-game party.
+		// Older trainer data can still be grouped when it looks like one full team.
 		var mons = [];
 		Object.keys(setdex).forEach(function (speciesName) {
 			if (setdex[speciesName] && setdex[speciesName][selection.setName]) {
@@ -342,6 +361,10 @@
 			if (!pokeInfo) return;
 			rrUpdateCardSprite(pokeInfo);
 			if (pokeInfo.id === "p2") rrRenderOpponentRoster(rrParseSetSelection($(this).val()));
+		});
+		$(document).on("change.rrSprites", "select.forme", function () {
+			var pokeInfo = $(this).closest(".poke-info")[0];
+			if (pokeInfo) rrUpdateCardSprite(pokeInfo);
 		});
 	});
 })();

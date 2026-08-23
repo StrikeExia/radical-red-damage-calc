@@ -65,9 +65,8 @@
   var RR_RANDOMIZATION_BITFLAG = 0xF2C;
 
   var rrMons = constants.mons || [];
-  // Radical Red 4.1 uses this internal slot for the Fairy Arceus forme.
-  // Older tables left it as an unused species, which also caused the old
-  // mixed party/PC scanner to lose synchronization after encountering it.
+  // This is the Fairy Arceus slot in Radical Red 4.1.
+  // Naming it here also keeps later party and box entries lined up.
   rrMons[834] = "Arceus-Fairy";
   var rrMoves = constants.moves || [];
   var rrAbilitiesBySpecies = constants.abilitiesBySpecies || {};
@@ -76,9 +75,8 @@
   var rrAbilityIdsBySpeciesId = dexAbilityConstants.abilityIdsBySpeciesId || [];
   var rrItems = itemConstants.items || [];
   var rrGrowthRatesBySpeciesId = growthRateConstants.growthRatesBySpeciesId || [];
-  // Radical Red 4.1 changes several experience curves from their canonical
-  // values. These overrides were verified against the patched ROM's species
-  // table; without them, valid boxed Pokémon can resolve to the wrong level.
+  // Radical Red 4.1 changes how quickly a few Pokémon level up.
+  // Use the game's values here so boxed Pokémon show the right level.
   var RR_41_GROWTH_RATE_OVERRIDES = {
     482: 4, // Mismagius
     494: 0, // Chatot
@@ -164,9 +162,8 @@
     1366: 0, // Okidogi
   };
 
-  // Certain held items will change a pokemon's forme when it enters battle.
-  // Import the battle-ready forme so the calculator uses its actual stats, typing,
-  // and ability while retaining the held item from the save.
+  // Some held items change a Pokémon as soon as battle starts.
+  // Import that battle form while keeping the item shown from the save.
   var RR_ITEM_BATTLE_FORMES = {
     "Dialga|Adamant Orb": "Dialga-Primal",
     "Palkia|Lustrous Orb": "Palkia-Origin",
@@ -523,17 +520,15 @@
     var slot = Number.isInteger(abilitySlot) ? abilitySlot : 0;
 
     if (abilityIds.length) {
-      // The Radical Red dex table stores abilities as hidden, primary,
-      // secondary. The save's ability slot uses primary, secondary, hidden.
-      // Reading both arrays in the same order caused Ability Pill changes to
-      // keep resolving as the primary randomized ability.
+      // The dex and save list ability slots in different orders.
+      // Match them here so randomized abilities and Ability Pills stay correct.
       var dexSlot = slot === 2 ? 0 : slot + 1;
       var slotAbilityId = abilityIds[dexSlot] || 0;
       if (slotAbilityId) {
         return slotAbilityId;
       }
 
-      // Missing secondary/hidden abilities fall back to the primary ability.
+      // If that slot is empty, use the main ability instead.
       if (abilityIds[1]) {
         return abilityIds[1];
       }
@@ -795,13 +790,13 @@
       return mon;
     }
 
+    var baseAbilityName = mon.abilityName;
     var battleFormSpeciesId = rrMons.indexOf(battleForm);
     mon.baseSpeciesId = mon.speciesId;
     mon.baseSpeciesName = mon.speciesName;
     mon.speciesId = battleFormSpeciesId;
     mon.speciesName = battleForm;
-    // Item transformations replace the base Pokemon's ability with the
-    // battle forme's ability. These formes all use their primary slot.
+    // Item-based forms swap to the new form's main ability.
     mon.abilitySlot = 0;
     mon.abilityName = rrResolveAbilityName(
       battleForm,
@@ -810,6 +805,45 @@
       saveInfo,
       options
     );
+    if (rrRandomizedAbilitiesEnabled(options, saveInfo)) {
+      mon.formeAbilities = {};
+      mon.formeAbilities[mon.baseSpeciesName] = baseAbilityName;
+      mon.formeAbilities[battleForm] = mon.abilityName;
+    }
+    return mon;
+  }
+
+  function rrAttachMegaFormAbilities(mon, saveInfo, options) {
+    if (!mon || !rrRandomizedAbilitiesEnabled(options, saveInfo)) {
+      return mon;
+    }
+
+    var baseSpeciesName = mon.baseSpeciesName || mon.speciesName;
+    var megaPrefix = baseSpeciesName + "-Mega";
+    var formeAbilities = mon.formeAbilities || {};
+    var hasAlternateForm = Object.keys(formeAbilities).some(function (speciesName) {
+      return speciesName !== mon.speciesName;
+    });
+    for (var speciesId = 1; speciesId < rrMons.length; speciesId++) {
+      var speciesName = rrMons[speciesId];
+      if (speciesName !== megaPrefix && speciesName.indexOf(megaPrefix + "-") !== 0) {
+        continue;
+      }
+      formeAbilities[speciesName] = rrResolveAbilityName(
+        speciesName,
+        speciesId,
+        0,
+        saveInfo,
+        options
+      );
+      hasAlternateForm = true;
+    }
+    if (!hasAlternateForm) {
+      delete mon.formeAbilities;
+      return mon;
+    }
+    formeAbilities[mon.speciesName] = mon.abilityName;
+    mon.formeAbilities = formeAbilities;
     return mon;
   }
 
@@ -839,9 +873,8 @@
       return "M";
     }
 
-    // Gen III stores gender in the personality value rather than a separate
-    // field. These ordinary gendered species use the standard 50/50 threshold.
-    // The calculator's species metadata continues to hide genderless species.
+    // Gen III works gender out from the personality value.
+    // Only show it for regular gendered Pokémon.
     return ((pid >>> 0) & 0xFF) < 127 ? "F" : "M";
   }
 
@@ -991,7 +1024,7 @@
       return Boolean(moveName && moveName !== "(No Move)");
     });
 
-    return rrApplyItemBattleForm({
+    return rrAttachMegaFormAbilities(rrApplyItemBattleForm({
       slot: slot,
       isParty: true,
       pid: pid >>> 0,
@@ -1007,7 +1040,7 @@
       itemName: rrResolveItemName(itemId),
       moveIds: moveIds,
       moveNames: moveNames
-    }, saveInfo, options);
+    }, saveInfo, options), saveInfo, options);
   }
 
   function rrParseBoxMon(monStruct, slot, saveInfo, options) {
@@ -1031,7 +1064,7 @@
       return Boolean(moveName && moveName !== "(No Move)");
     });
 
-    return rrApplyItemBattleForm({
+    return rrAttachMegaFormAbilities(rrApplyItemBattleForm({
       slot: slot,
       isParty: false,
       pid: pid >>> 0,
@@ -1047,7 +1080,7 @@
       itemName: rrResolveItemName(itemId),
       moveIds: moveIds,
       moveNames: moveNames
-    }, saveInfo, options);
+    }, saveInfo, options), saveInfo, options);
   }
 
   function rrMonToShowdown(mon) {
@@ -1068,8 +1101,7 @@
       output.push("- " + moveName);
     });
     output.push("");
-    // addSets() scans several rows ahead for each set. Keep a truly blank row
-    // between records so the following Level line cannot overwrite this one.
+    // Leave a blank row between sets so the next Level line cannot overwrite this one.
     return output.join("\n") + "\n";
   }
 
@@ -1106,9 +1138,8 @@
     var parsedParty = [];
     var physicalPartyCount = Math.min(partyCount, RR_PARTY_DATA_LENGTH / RR_PARTY_STRUCT_SIZE);
 
-    // Party records occupy fixed 100-byte slots. Advance by physical slot even
-    // when a record is invalid, so one bad party record cannot change how PC
-    // records are interpreted.
+    // Party slots are always 100 bytes, even when one is invalid.
+    // Moving by the full slot keeps the PC data lined up.
     for (var slot = 0; slot < physicalPartyCount; slot++) {
       var structStart = slot * RR_PARTY_STRUCT_SIZE;
       var monStruct = boxData.subarray(structStart, structStart + RR_PARTY_STRUCT_SIZE);
@@ -1131,8 +1162,7 @@
         "Invalid Radical Red save size: expected 131,072 bytes or 131,088 bytes, got " + bytes.length + "."
       );
     }
-    // mGBA appends a 16-byte RTC footer. All GBA save offsets are relative to
-    // the first 128 KiB, so keep the footer out of sector and layout scans.
+    // mGBA may add a small RTC footer, so ignore it while reading the save layout.
     bytes = bytes.subarray(0, RR_CORE_SAVE_SIZE);
     var layout = rrResolveActiveLayout(bytes);
     var saveInfo = rrReadRandomizerSaveInfo(bytes);

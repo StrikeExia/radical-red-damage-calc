@@ -577,6 +577,19 @@ function smogonAnalysis(pokemonName) {
 	return "https://smogon.com/dex/" + generation + "/pokemon/" + pokemonName.toLowerCase() + "/";
 }
 
+var minimalGrindingModeToggle = document.getElementById("minimal-grinding-mode");
+if (minimalGrindingModeToggle) {
+	minimalGrindingModeToggle.checked = localStorage.getItem("minimalGrindingMode") === "true";
+}
+
+function usesMinimalGrindingEVs(set) {
+	return Boolean(minimalGrindingModeToggle && minimalGrindingModeToggle.checked && set && !set.isCustomSet);
+}
+
+function getMinimalGrindingEV(pokemonName, setName, stat) {
+	return stat === "hp" && pokemonName === "Marowak-Alola" && setName === "Angry Ghost" ? 252 : 0;
+}
+
 // auto-update set details on select
 $(".set-selector").change(function () {
 	var fullSetName = $(this).val();
@@ -646,17 +659,20 @@ $(".set-selector").change(function () {
 		}
 		if (regSets || randset) {
 			var set = regSets ? correctHiddenPower(setdex[pokemonName][setName]) : randset;
+			var minimalGrindingEVs = regSets && usesMinimalGrindingEVs(set);
 			if (regSets) {
 				pokeObj.find(".teraType").val(set.teraType || getForcedTeraType(pokemonName) || pokemon.types[0]);
 			}
 			pokeObj.find(".level").val(set.level === undefined ? 100 : set.level);
-			pokeObj.find(".hp .evs").val((set.evs && set.evs.hp !== undefined) ? set.evs.hp : 0);
+			pokeObj.find(".hp .evs").val(minimalGrindingEVs ? getMinimalGrindingEV(pokemonName, setName, "hp") :
+				(set.evs && set.evs.hp !== undefined) ? set.evs.hp : 0);
 			pokeObj.find(".hp .ivs").val((set.ivs && set.ivs.hp !== undefined) ? set.ivs.hp : 31);
 			pokeObj.find(".hp .dvs").val((set.dvs && set.dvs.hp !== undefined) ? set.dvs.hp : 15);
 			for (i = 0; i < LEGACY_STATS[gen].length; i++) {
 				pokeObj.find("." + LEGACY_STATS[gen][i] + " .evs").val(
-					(set.evs && set.evs[LEGACY_STATS[gen][i]] !== undefined) ?
-						set.evs[LEGACY_STATS[gen][i]] : ($("#randoms").prop("checked") ? 84 : 0));
+					minimalGrindingEVs ? getMinimalGrindingEV(pokemonName, setName, LEGACY_STATS[gen][i]) :
+						(set.evs && set.evs[LEGACY_STATS[gen][i]] !== undefined) ?
+							set.evs[LEGACY_STATS[gen][i]] : ($("#randoms").prop("checked") ? 84 : 0));
 				pokeObj.find("." + LEGACY_STATS[gen][i] + " .ivs").val(
 					(set.ivs && set.ivs[LEGACY_STATS[gen][i]] !== undefined) ? set.ivs[LEGACY_STATS[gen][i]] : 31);
 				pokeObj.find("." + LEGACY_STATS[gen][i] + " .dvs").val(
@@ -764,6 +780,21 @@ $(".set-selector").change(function () {
 	}
 });
 
+if (minimalGrindingModeToggle) {
+	$(minimalGrindingModeToggle).on("change", function () {
+		localStorage.setItem("minimalGrindingMode", this.checked);
+		$(".set-selector").each(function () {
+			var fullSetName = $(this).val() || "";
+			var separator = fullSetName.indexOf(" (");
+			if (separator < 0) return;
+			var pokemonName = fullSetName.substring(0, separator);
+			var setName = fullSetName.substring(separator + 2, fullSetName.lastIndexOf(")"));
+			var set = setdex && setdex[pokemonName] && setdex[pokemonName][setName];
+			if (set && !set.isCustomSet) $(this).change();
+		});
+	});
+}
+
 function formatMovePool(moves) {
 	var formatted = [];
 	for (var i = 0; i < moves.length; i++) {
@@ -808,6 +839,157 @@ function showFormes(formeObj, pokemonName, pokemon, baseFormeName) {
 	formeObj.children("select").find("option").remove().end().append(formeOptions).change();
 	formeObj.show();
 }
+
+function getMegaState(pokeObj) {
+	if (gen < 6 || !GENERATION || !pokedex) return null;
+
+	var forme = pokeObj.find(".forme").val();
+	var fullSetName = pokeObj.find("input.set-selector").val() || "";
+	var selectedName = fullSetName.substring(0, fullSetName.indexOf(" ("));
+	var currentName = forme || selectedName;
+	var currentSpecies = pokedex[currentName];
+	if (!currentSpecies) return null;
+
+	var baseName = currentSpecies.baseSpecies || currentName;
+	var baseSpecies = pokedex[baseName];
+	if (!baseSpecies || !baseSpecies.otherFormes) return null;
+
+	var itemName = pokeObj.find(".item").val();
+	var targetName;
+	if (baseName === "Groudon" && itemName === "Red Orb") {
+		targetName = "Groudon-Primal";
+	} else if (baseName === "Kyogre" && itemName === "Blue Orb") {
+		targetName = "Kyogre-Primal";
+	} else if (baseName === "Rayquaza" && pokeObj.find(".move-selector").filter(function () {
+		return $(this).val() === "Dragon Ascent";
+	}).length) {
+		targetName = "Rayquaza-Mega";
+	} else if (itemName) {
+		var item = GENERATION.items.get(calc.toID(itemName));
+		if (item && (item.megaEvolves === baseName || item.megaEvolves === currentName)) {
+			var megaFormes = baseSpecies.otherFormes.filter(function (otherForme) {
+				return otherForme.indexOf("-Mega") !== -1;
+			});
+			var megaSuffix = endsWith(itemName, "ite X") ? "-Mega-X" :
+				endsWith(itemName, "ite Y") ? "-Mega-Y" : "";
+			targetName = megaSuffix && megaFormes.filter(function (otherForme) {
+				return endsWith(otherForme, megaSuffix);
+			})[0] || megaFormes[0];
+		}
+	}
+
+	if (!targetName || targetName === baseName || !pokedex[targetName]) return null;
+	return {
+		baseName: baseName,
+		currentName: currentName,
+		targetName: targetName,
+		isMega: currentName === targetName
+	};
+}
+
+function updateMegaToggle(pokeObj) {
+	var control = pokeObj.find(".mega-control");
+	var toggle = control.find(".mega-toggle");
+	var state = getMegaState(pokeObj);
+	var forme = pokeObj.find(".forme");
+	var formeSpecies = pokedex && pokedex[forme.val()];
+	var baseSpecies = formeSpecies && pokedex[formeSpecies.baseSpecies || forme.val()];
+	var megaOnlyFormes = baseSpecies && baseSpecies.otherFormes && baseSpecies.otherFormes.length &&
+		baseSpecies.otherFormes.every(function (otherForme) {
+			return /-(?:Mega(?:-[XY])?|Primal)$/.test(otherForme);
+		});
+	if (megaOnlyFormes) forme.parent().hide();
+	if (!state) {
+		control.hide();
+		toggle.attr("aria-pressed", "false");
+		return;
+	}
+
+	control.show();
+	toggle.attr("aria-pressed", state.isMega ? "true" : "false");
+	toggle.attr("title", state.isMega ? "Return to " + state.baseName : "Evolve into " + state.targetName);
+}
+
+function getImportedFormeAbility(pokeObj, formeName) {
+	var attachedFormeAbilities;
+	try {
+		attachedFormeAbilities = JSON.parse(pokeObj.attr("data-forme-abilities") || "null");
+	} catch (_error) {}
+	if (attachedFormeAbilities && attachedFormeAbilities[formeName]) {
+		return attachedFormeAbilities[formeName];
+	}
+	var fullSetName = pokeObj.find("input.set-selector").val() || "";
+	var separator = fullSetName.indexOf(" (");
+	if (separator < 0) return null;
+	var speciesName = fullSetName.substring(0, separator);
+	var rosterButton = $("#rr-save-roster .rr-roster-mon").filter(function () {
+		return $(this).attr("data-species-name") === speciesName;
+	}).first();
+	if (!rosterButton.length) return null;
+	try {
+		var rosterFormeAbilities = JSON.parse(rosterButton.attr("data-forme-abilities") || "{}");
+		return rosterFormeAbilities[formeName];
+	} catch (_error) {
+		return null;
+	}
+}
+
+function initializeMegaToggles() {
+	$(".poke-info").each(function () {
+		var pokeObj = $(this);
+		if (pokeObj.find(".mega-control").length) return;
+		var control = $(
+			'<div class="mega-control hide">' +
+				'<button type="button" class="mega-toggle" aria-label="MEGA" aria-pressed="false">' +
+					'<span class="mega-toggle-content" aria-hidden="true">' +
+						'<img class="mega-key-stone" src="./img/key-stone.png" alt="" />' +
+						'<span class="mega-toggle-label">MEGA</span>' +
+					'</span>' +
+				'</button>' +
+			'</div>'
+		);
+		pokeObj.find(".info-group.top > div").has(".level").after(control);
+	});
+}
+
+initializeMegaToggles();
+
+$("input.set-selector").on("change.formeAbilities", function () {
+	$(this).closest(".poke-info").removeAttr("data-forme-abilities");
+});
+
+$(".mega-toggle").click(function () {
+	var pokeObj = $(this).closest(".poke-info");
+	var state = getMegaState(pokeObj);
+	if (!state) return;
+
+	var forme = pokeObj.find(".forme");
+	if (!state.isMega) {
+		pokeObj.data("preMegaAbility", pokeObj.find(".ability").val());
+		pokeObj.data("preMegaSpecies", state.baseName);
+	}
+	var nextForme = state.isMega ? state.baseName : state.targetName;
+	forme.val(nextForme).change();
+	var importedAbility = getImportedFormeAbility(pokeObj, nextForme);
+	if (importedAbility) {
+		setSelectValueIfValid(pokeObj.find(".ability"), importedAbility, importedAbility);
+		pokeObj.find(".ability").keyup().change();
+	} else if (state.isMega) {
+		var oldAbility = pokeObj.data("preMegaSpecies") === state.baseName && pokeObj.data("preMegaAbility");
+		var baseAbility = oldAbility || pokedex[state.baseName].abilities[0];
+		setSelectValueIfValid(pokeObj.find(".ability"), baseAbility, baseAbility);
+		pokeObj.find(".ability").keyup().change();
+	}
+	updateMegaToggle(pokeObj);
+});
+
+$(".item, .move-selector, .set-selector, .forme").on("change.megaToggle", function () {
+	updateMegaToggle($(this).closest(".poke-info"));
+});
+
+$(".gen").on("change.megaToggle", function () {
+	$(".poke-info").each(function () { updateMegaToggle($(this)); });
+});
 
 function stellarButtonsVisibility(pokeObj, vis) {
 	var fullSetName = pokeObj.find("input.set-selector").val();

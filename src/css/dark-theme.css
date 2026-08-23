@@ -173,3 +173,24 @@ input.select2-input {
     */
     background: url('../js/vendor/select2/select2.png') no-repeat 100% -22px, var(--background);
 }
+
+.changelog-card {
+	border-color: #ffb7c5;
+	background: var(--fieldset-color);
+	box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55), 0 0 12px rgba(255, 183, 197, 0.2);
+	color: var(--text);
+}
+
+.changelog-description,
+.changelog-version {
+	color: #bbb4c3;
+}
+
+.changelog-close:hover,
+.changelog-close:focus-visible {
+	background: #49383d;
+}
+
+.changelog-footer {
+	border-top-color: #494250;
+}
