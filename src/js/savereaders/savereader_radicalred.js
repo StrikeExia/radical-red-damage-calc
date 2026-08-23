@@ -163,6 +163,21 @@
     1365: 0, // Munkidori
     1366: 0, // Okidogi
   };
+
+  // Certain held items will change a pokemon's forme when it enters battle.
+  // Import the battle-ready forme so the calculator uses its actual stats, typing,
+  // and ability while retaining the held item from the save.
+  var RR_ITEM_BATTLE_FORMES = {
+    "Dialga|Adamant Orb": "Dialga-Primal",
+    "Palkia|Lustrous Orb": "Palkia-Origin",
+    "Giratina|Griseous Orb": "Giratina-Origin",
+    "Groudon|Red Orb": "Groudon-Primal",
+    "Kyogre|Blue Orb": "Kyogre-Primal",
+    "Zacian|Rusty Sword": "Zacian-Crowned",
+    "Zacian|Rusted Sword": "Zacian-Crowned",
+    "Zamazenta|Rusty Shield": "Zamazenta-Crowned",
+    "Zamazenta|Rusted Shield": "Zamazenta-Crowned"
+  };
   Object.keys(RR_41_GROWTH_RATE_OVERRIDES).forEach(function (speciesId) {
     rrGrowthRatesBySpeciesId[speciesId] = RR_41_GROWTH_RATE_OVERRIDES[speciesId];
   });
@@ -762,6 +777,42 @@
     return itemName;
   }
 
+  function rrResolveItemBattleForm(speciesName, itemName) {
+    if (!speciesName || !itemName) {
+      return null;
+    }
+
+    var battleForm = RR_ITEM_BATTLE_FORMES[speciesName + "|" + itemName] || null;
+    if (!battleForm || rrMons.indexOf(battleForm) < 1) {
+      return null;
+    }
+    return battleForm;
+  }
+
+  function rrApplyItemBattleForm(mon, saveInfo, options) {
+    var battleForm = rrResolveItemBattleForm(mon.speciesName, mon.itemName);
+    if (!battleForm) {
+      return mon;
+    }
+
+    var battleFormSpeciesId = rrMons.indexOf(battleForm);
+    mon.baseSpeciesId = mon.speciesId;
+    mon.baseSpeciesName = mon.speciesName;
+    mon.speciesId = battleFormSpeciesId;
+    mon.speciesName = battleForm;
+    // Item transformations replace the base Pokemon's ability with the
+    // battle forme's ability. These formes all use their primary slot.
+    mon.abilitySlot = 0;
+    mon.abilityName = rrResolveAbilityName(
+      battleForm,
+      battleFormSpeciesId,
+      mon.abilitySlot,
+      saveInfo,
+      options
+    );
+    return mon;
+  }
+
   function rrIsValidSpeciesName(speciesName) {
     return Boolean(speciesName && speciesName !== "-----" && speciesName !== "None");
   }
@@ -940,7 +991,7 @@
       return Boolean(moveName && moveName !== "(No Move)");
     });
 
-    return {
+    return rrApplyItemBattleForm({
       slot: slot,
       isParty: true,
       pid: pid >>> 0,
@@ -956,7 +1007,7 @@
       itemName: rrResolveItemName(itemId),
       moveIds: moveIds,
       moveNames: moveNames
-    };
+    }, saveInfo, options);
   }
 
   function rrParseBoxMon(monStruct, slot, saveInfo, options) {
@@ -980,7 +1031,7 @@
       return Boolean(moveName && moveName !== "(No Move)");
     });
 
-    return {
+    return rrApplyItemBattleForm({
       slot: slot,
       isParty: false,
       pid: pid >>> 0,
@@ -996,7 +1047,7 @@
       itemName: rrResolveItemName(itemId),
       moveIds: moveIds,
       moveNames: moveNames
-    };
+    }, saveInfo, options);
   }
 
   function rrMonToShowdown(mon) {
@@ -1319,6 +1370,7 @@
       resolveGenderedSpeciesName: rrResolveGenderedSpeciesName,
       resolveGender: rrResolveGender,
       resolveItemName: rrResolveItemName,
+      resolveItemBattleForm: rrResolveItemBattleForm,
       randomizedAbilitiesEnabled: rrRandomizedAbilitiesEnabled,
       resolvePartyAbilitySlot: rrResolvePartyAbilitySlot,
       resolveBoxAbilitySlot: rrResolveBoxAbilitySlot,
