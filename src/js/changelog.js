@@ -1,7 +1,7 @@
 (function () {
 	"use strict";
 
-	var CHANGELOG_VERSION = "2026.08.23.1";
+	var CHANGELOG_VERSION = "2026.08.23";
 	var CHANGELOG_STORAGE_KEY = "radicalRedCalcSeenChangelog";
 	var CHANGELOG_ITEMS = [
 		"Added a MEGA toggle for Pokemon holding their respective Mega Stones.",
