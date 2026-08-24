@@ -405,6 +405,30 @@ th {
 #rr-save-watch-status[data-state="error"] {
 	color: #b00020;
 }
+.total.nature-boosted {
+	color: #d62828;
+}
+.total.nature-lowered {
+	color: #1769c2;
+}
+.speed-faster {
+	color: #187b24;
+	font-weight: bold;
+}
+.speed-slower {
+	color: #1769c2;
+}
+.speed-tie {
+	font-weight: bold;
+}
+.totalMod[data-speed-marker] {
+	white-space: nowrap;
+}
+.totalMod[data-speed-marker]::after {
+	content: attr(data-speed-marker);
+	margin-left: 3px;
+	font-size: 0.8em;
+}
 .rr-opponent-roster {
 	margin-top: 2px;
 }

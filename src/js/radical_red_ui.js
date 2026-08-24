@@ -318,6 +318,10 @@
 		roster.appendChild(group);
 	}
 
+	function rrTrainerDisplayName(name) {
+		return String(name || "").replace(/^\*/, "").replace(/\{PK\}\{MN\}/gi, "PkMn");
+	}
+
 	function rrRenderOpponentRoster(selection) {
 		var roster = rrEnsureOpponentRoster();
 		roster.textContent = "";
@@ -333,7 +337,7 @@
 		if (teams.length) {
 			var selectedGenders = [];
 			teams.forEach(function (team, index) {
-				var title = (team.name || selection.setName).replace(/^\*/, "");
+				var title = rrTrainerDisplayName(team.name || selection.setName);
 				if (teams.length > 1) title += " · Team " + (index + 1);
 				rrRenderOpponentTeamGroup(roster, title, team.members, selection.setName);
 				team.members.forEach(function (member) {
@@ -359,7 +363,7 @@
 		});
 		if (mons.length > 6) mons = [];
 		if (!mons.length) return;
-		rrRenderOpponentTeamGroup(roster, selection.setName.replace(/^\*/, ""), mons, selection.setName);
+		rrRenderOpponentTeamGroup(roster, rrTrainerDisplayName(selection.setName), mons, selection.setName);
 	}
 
 	window.renderRadicalRedSaveRoster = renderRadicalRedSaveRoster;

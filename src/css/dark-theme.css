@@ -92,6 +92,22 @@ textarea {
     color: var(--text);
 }
 
+.total.nature-boosted {
+    color: #ff6b6b;
+}
+
+.total.nature-lowered {
+    color: #6aa9ff;
+}
+
+.speed-faster {
+    color: #72d47e;
+}
+
+.speed-slower {
+    color: #6aa9ff;
+}
+
 .wrapper {
     background-color: var(--background);
     color: var(--text);

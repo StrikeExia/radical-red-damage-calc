@@ -1,12 +1,15 @@
 (function () {
 	"use strict";
 
-	var CHANGELOG_VERSION = "2026.08.23";
+	var CHANGELOG_VERSION = "1.1.0";
+	var CHANGELOG_UPDATED_DATE = "August 24, 2026";
 	var CHANGELOG_STORAGE_KEY = "radicalRedCalcSeenChangelog";
 	var CHANGELOG_ITEMS = [
 		"Added a MEGA toggle for Pokemon holding their respective Mega Stones.",
 		"Added Minimal Grinding Mode checkbox for Normal and Hardcore trainer sets. This sets all EV's to 0.",
-		"Added automatic calculator form changes for Pokemon that have another form when having their respective held item."
+		"Added automatic calculator form changes for Pokemon that have another form when having their respective held item.",
+		"Added color coding for Pokemon stats that are increased/decreased by their nature.",
+		"Added indicators for when a Pokemon is slower, faster, or speed tied with the opponent Pokemon."
 	];
 
 	function getSeenVersion() {
@@ -63,7 +66,8 @@
 		card.appendChild(list);
 
 		var footer = createElement("div", "changelog-footer");
-		footer.appendChild(createElement("span", "changelog-version", "Updated " + CHANGELOG_VERSION));
+		footer.appendChild(createElement("span", "changelog-version",
+			"Version " + CHANGELOG_VERSION + " · Updated " + CHANGELOG_UPDATED_DATE));
 		var dismissButton = createElement("button", "changelog-dismiss", "Close");
 		dismissButton.type = "button";
 		footer.appendChild(dismissButton);

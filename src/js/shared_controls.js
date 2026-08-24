@@ -1400,7 +1400,27 @@ function calcStat(poke, StatID) {
 	if (gen > 7 && StatID === "hp" && poke.isDynamaxed && total !== 1) {
 		total *= 2;
 	}
-	stat.find(".total").text(total);
+	var totalDisplay = stat.find(".total");
+	totalDisplay.removeClass("nature-boosted nature-lowered").removeAttr("title aria-label");
+	if (nature && calc.NATURES[nature]) {
+		var natureStats = calc.NATURES[nature];
+		var currentStat = legacyStatToStat(StatID);
+		if (natureStats[0] !== natureStats[1]) {
+			if (currentStat === natureStats[0]) {
+				totalDisplay.addClass("nature-boosted").attr({
+					"title": "Increased by nature",
+					"aria-label": total + ", increased by nature"
+				});
+			}
+			if (currentStat === natureStats[1]) {
+				totalDisplay.addClass("nature-lowered").attr({
+					"title": "Decreased by nature",
+					"aria-label": total + ", decreased by nature"
+				});
+			}
+		}
+	}
+	totalDisplay.text(total);
 	return total;
 }
 

@@ -41,6 +41,10 @@ function normalized(value) {
 		.replace(/[^a-z0-9]+/g, "");
 }
 
+function displayTrainerName(value) {
+	return String(value || "").replace(/\{PK\}\{MN\}/gi, "PkMn");
+}
+
 function parseDump(text) {
 	var trainers = [];
 	var blocks = text.replace(/\r/g, "").split(/^={10,}\s*$/m);
@@ -49,7 +53,7 @@ function parseDump(text) {
 		var header = lines[0] && lines[0].match(/^(.+?)\s+\(id:\s*(0x[0-9a-f]+)\)$/i);
 		if (!header) return;
 
-		var trainer = {id: header[2].toLowerCase(), name: header[1].trim(), pokemon: []};
+		var trainer = {id: header[2].toLowerCase(), name: displayTrainerName(header[1].trim()), pokemon: []};
 		var current = null;
 		lines.slice(1).forEach(function (line) {
 			var pokemon = line.match(/^(.+?)(?: \(([^)]+)\))? @ (.+)$/);

@@ -41,8 +41,7 @@ function performCalculations() {
 	var battling = [p1, p2];
 	p1.maxDamages = [];
 	p2.maxDamages = [];
-	p1info.find(".sp .totalMod").text(p1.stats.spe);
-	p2info.find(".sp .totalMod").text(p2.stats.spe);
+	updateSpeedComparison(p1info, p2info, p1.stats.spe, p2.stats.spe);
 	var fastestSide = p1.stats.spe > p2.stats.spe ? 0 : p1.stats.spe === p2.stats.spe ? "tie" : 1;
 
 	var result, maxDamage;
@@ -99,6 +98,29 @@ function performCalculations() {
 	bestResult.change();
 	$("#resultHeaderL").text(p1.name + "'s Moves (select one to show detailed results)");
 	$("#resultHeaderR").text(p2.name + "'s Moves (select one to show detailed results)");
+}
+
+function updateSpeedComparison(p1info, p2info, p1Speed, p2Speed) {
+	var p1Display = p1info.find(".sp .totalMod");
+	var p2Display = p2info.find(".sp .totalMod");
+	p1Display.add(p2Display).removeClass("speed-faster speed-slower speed-tie")
+		.removeAttr("data-speed-marker title aria-label");
+
+	if (p1Speed === p2Speed) {
+		p1Display.add(p2Display).addClass("speed-tie").text(p1Speed).attr("data-speed-marker", "=")
+			.attr("title", "Effective Speed tie").attr("aria-label", "Effective Speed " + p1Speed + ", tied");
+		return;
+	}
+
+	var p1IsFaster = p1Speed > p2Speed;
+	p1Display.addClass(p1IsFaster ? "speed-faster" : "speed-slower")
+		.text(p1Speed).attr("data-speed-marker", p1IsFaster ? "▲" : "▼")
+		.attr("title", p1IsFaster ? "Faster than Pokémon 2" : "Slower than Pokémon 2")
+		.attr("aria-label", "Effective Speed " + p1Speed + (p1IsFaster ? ", faster than Pokémon 2" : ", slower than Pokémon 2"));
+	p2Display.addClass(p1IsFaster ? "speed-slower" : "speed-faster")
+		.text(p2Speed).attr("data-speed-marker", p1IsFaster ? "▼" : "▲")
+		.attr("title", p1IsFaster ? "Slower than Pokémon 1" : "Faster than Pokémon 1")
+		.attr("aria-label", "Effective Speed " + p2Speed + (p1IsFaster ? ", slower than Pokémon 1" : ", faster than Pokémon 1"));
 }
 
 $(".result-move").change(function () {
