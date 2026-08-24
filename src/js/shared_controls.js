@@ -911,6 +911,14 @@ function updateMegaToggle(pokeObj) {
 }
 
 function getImportedFormeAbility(pokeObj, formeName) {
+	var fullSetName = pokeObj.find("input.set-selector").val() || "";
+	var separator = fullSetName.indexOf(" (");
+	if (separator < 0) return null;
+	var speciesName = fullSetName.substring(0, separator);
+	var setName = fullSetName.substring(separator + 2, fullSetName.lastIndexOf(")"));
+	var selectedSet = setdex && setdex[speciesName] && setdex[speciesName][setName];
+	if (!selectedSet || !selectedSet.isCustomSet) return null;
+
 	var attachedFormeAbilities;
 	try {
 		attachedFormeAbilities = JSON.parse(pokeObj.attr("data-forme-abilities") || "null");
@@ -918,12 +926,8 @@ function getImportedFormeAbility(pokeObj, formeName) {
 	if (attachedFormeAbilities && attachedFormeAbilities[formeName]) {
 		return attachedFormeAbilities[formeName];
 	}
-	var fullSetName = pokeObj.find("input.set-selector").val() || "";
-	var separator = fullSetName.indexOf(" (");
-	if (separator < 0) return null;
-	var speciesName = fullSetName.substring(0, separator);
 	var rosterButton = $("#rr-save-roster .rr-roster-mon").filter(function () {
-		return $(this).attr("data-species-name") === speciesName;
+		return $(this).attr("data-species-name") === speciesName && $(this).attr("data-set-name") === setName;
 	}).first();
 	if (!rosterButton.length) return null;
 	try {
@@ -974,10 +978,15 @@ $(".mega-toggle").click(function () {
 	if (importedAbility) {
 		setSelectValueIfValid(pokeObj.find(".ability"), importedAbility, importedAbility);
 		pokeObj.find(".ability").keyup().change();
-	} else if (state.isMega) {
-		var oldAbility = pokeObj.data("preMegaSpecies") === state.baseName && pokeObj.data("preMegaAbility");
-		var baseAbility = oldAbility || pokedex[state.baseName].abilities[0];
-		setSelectValueIfValid(pokeObj.find(".ability"), baseAbility, baseAbility);
+	} else {
+		var nextAbility;
+		if (state.isMega) {
+			var oldAbility = pokeObj.data("preMegaSpecies") === state.baseName && pokeObj.data("preMegaAbility");
+			nextAbility = oldAbility || pokedex[state.baseName].abilities[0];
+		} else {
+			nextAbility = pokedex[state.targetName].abilities[0];
+		}
+		setSelectValueIfValid(pokeObj.find(".ability"), nextAbility, nextAbility);
 		pokeObj.find(".ability").keyup().change();
 	}
 	updateMegaToggle(pokeObj);
