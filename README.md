@@ -195,7 +195,7 @@ Some helpful extras were added for Radical Red players:
 - Let the calculator watch your save file and refresh it automatically.
 - See your own Pokémon and the opposing trainer's full team with sprites.
 
-The save and team-box ideas were inspired by calculators for other Pokémon ROM hacks, especially hzla's calculator.
+The save and team-box ideas were inspired by calculators for other Pokémon ROM hacks, especially hzla's ROM hack calculator.
 
 Thanks to soupercell and the Radical Red team for the game and the official
 [Normal mode](https://docs.google.com/spreadsheets/d/1ES8L4OzeJ8rCuMWFNvrDaZKArqR7Vys2ytFxjx2pbwE/edit)

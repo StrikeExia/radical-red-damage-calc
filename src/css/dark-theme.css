@@ -23,13 +23,16 @@ html, body {
     color: var(--text);
 }
 
-.theme-toggle {
+.theme-toggle,
+.changelog-trigger {
     color: var(--text);
     background: var(--background);
 }
 
 .theme-toggle:hover,
-.theme-toggle:focus-visible {
+.theme-toggle:focus-visible,
+.changelog-trigger:hover,
+.changelog-trigger:focus-visible {
     background: var(--button-hover);
 }
 

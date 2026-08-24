@@ -1,7 +1,7 @@
 (function () {
 	"use strict";
 
-	var CHANGELOG_VERSION = "2026.08.23";
+	var CHANGELOG_VERSION = "2026.08.23.1";
 	var CHANGELOG_STORAGE_KEY = "radicalRedCalcSeenChangelog";
 	var CHANGELOG_ITEMS = [
 		"Added a MEGA toggle for Pokemon holding their respective Mega Stones.",
@@ -30,8 +30,9 @@
 		return element;
 	}
 
-	function showChangelog() {
-		if (getSeenVersion() === CHANGELOG_VERSION) return;
+	function showChangelog(forceOpen) {
+		if ((!forceOpen && getSeenVersion() === CHANGELOG_VERSION) ||
+			document.querySelector(".changelog-modal")) return;
 
 		var previouslyFocused = document.activeElement;
 		var overlay = createElement("div", "changelog-modal");
@@ -51,7 +52,7 @@
 		var heading = createElement("h2", "changelog-heading", "Calculator Update");
 		heading.id = headingId;
 		card.appendChild(heading);
-		var description = createElement("p", "changelog-description", "Here’s what changed since your last visit:");
+		var description = createElement("p", "changelog-description", "Here’s what changed in the most recent update:");
 		description.id = descriptionId;
 		card.appendChild(description);
 
@@ -62,7 +63,7 @@
 		card.appendChild(list);
 
 		var footer = createElement("div", "changelog-footer");
-		footer.appendChild(createElement("span", "changelog-version", "Update " + CHANGELOG_VERSION));
+		footer.appendChild(createElement("span", "changelog-version", "Updated " + CHANGELOG_VERSION));
 		var dismissButton = createElement("button", "changelog-dismiss", "Close");
 		dismissButton.type = "button";
 		footer.appendChild(dismissButton);
@@ -92,9 +93,15 @@
 		dismissButton.focus();
 	}
 
+	function initializeChangelog() {
+		var trigger = document.querySelector(".changelog-trigger");
+		if (trigger) trigger.addEventListener("click", function () { showChangelog(true); });
+		showChangelog(false);
+	}
+
 	if (document.readyState === "loading") {
-		document.addEventListener("DOMContentLoaded", showChangelog);
+		document.addEventListener("DOMContentLoaded", initializeChangelog);
 	} else {
-		showChangelog();
+		initializeChangelog();
 	}
 })();
