@@ -138,6 +138,7 @@
 		button.title = mon.speciesName + " · Level " + mon.level + " · Click for Pokémon 1, Shift-click for Pokémon 2";
 		button.setAttribute("aria-label", button.title);
 		button.dataset.speciesName = mon.speciesName;
+		button.dataset.setName = setName;
 		button.dataset.formeAbilities = JSON.stringify(formeAbilities || {});
 		button.appendChild(rrCreateSprite(mon.speciesName));
 
