@@ -320,7 +320,8 @@ th {
 	padding: 6px;
 	text-align: center;
 }
-.rr-save-box {
+.rr-save-box,
+.rr-opponent-box {
 	box-sizing: content-box;
 	clear: both;
 	float: none;
@@ -328,10 +329,12 @@ th {
 	width: 32em;
 	margin-top: 8px;
 }
-.rr-player-panel {
+.rr-player-panel,
+.rr-opponent-panel {
 	width: 33.7em;
 }
-.rr-player-panel > .poke-info {
+.rr-player-panel > .poke-info,
+.rr-opponent-panel > .poke-info {
 	float: none;
 	display: block;
 }
@@ -403,8 +406,7 @@ th {
 	color: #b00020;
 }
 .rr-opponent-roster {
-	margin-top: 8px;
-	border-top: 1px solid #aaa;
+	margin-top: 2px;
 }
 .holder-0 {
     position: absolute;

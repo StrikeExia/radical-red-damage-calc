@@ -279,15 +279,31 @@
 	function rrEnsureOpponentRoster() {
 		var roster = document.getElementById("rr-opponent-roster");
 		if (roster) return roster;
+
+		var fieldset = document.createElement("fieldset");
+		fieldset.className = "rr-opponent-box";
+		fieldset.hidden = true;
+		var legend = document.createElement("legend");
+		legend.setAttribute("align", "center");
+		legend.textContent = "Opposing Team";
+		fieldset.appendChild(legend);
+
 		roster = document.createElement("section");
 		roster.id = "rr-opponent-roster";
 		roster.className = "rr-roster-panel rr-opponent-roster";
 		roster.setAttribute("aria-label", "Opposing trainer team");
-		document.getElementById("p2").appendChild(roster);
+		fieldset.appendChild(roster);
+
+		var p2 = document.getElementById("p2");
+		if (p2 && p2.parentNode) {
+			p2.parentNode.classList.add("rr-opponent-panel");
+			p2.parentNode.appendChild(fieldset);
+		}
 		return roster;
 	}
 
 	function rrRenderOpponentTeamGroup(roster, title, mons, defaultSetName) {
+		roster.parentNode.hidden = false;
 		var group = document.createElement("div");
 		group.className = "rr-roster-group";
 		var heading = document.createElement("strong");
@@ -305,6 +321,7 @@
 	function rrRenderOpponentRoster(selection) {
 		var roster = rrEnsureOpponentRoster();
 		roster.textContent = "";
+		roster.parentNode.hidden = true;
 		if (!selection.setName || typeof setdex === "undefined") return;
 
 		var selectionKey = selection.speciesName + " (" + selection.setName + ")";
@@ -316,7 +333,7 @@
 		if (teams.length) {
 			var selectedGenders = [];
 			teams.forEach(function (team, index) {
-				var title = "Opposing team · " + selection.setName;
+				var title = (team.name || selection.setName).replace(/^\*/, "");
 				if (teams.length > 1) title += " · Team " + (index + 1);
 				rrRenderOpponentTeamGroup(roster, title, team.members, selection.setName);
 				team.members.forEach(function (member) {
@@ -342,7 +359,7 @@
 		});
 		if (mons.length > 6) mons = [];
 		if (!mons.length) return;
-		rrRenderOpponentTeamGroup(roster, "Opposing team · " + selection.setName, mons, selection.setName);
+		rrRenderOpponentTeamGroup(roster, selection.setName.replace(/^\*/, ""), mons, selection.setName);
 	}
 
 	window.renderRadicalRedSaveRoster = renderRadicalRedSaveRoster;
